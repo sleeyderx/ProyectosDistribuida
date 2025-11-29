@@ -1,0 +1,1 @@
+Proyecto desarrollado utilizando el IDE de pycharm, las librerias utilizadas solo se instalan si es que no estan instaladas aun, se inicia el Productor, seguido de los consumidores que se van a tener. en terminal python3 nombre_del_archivo.py ip_de_la_maquina_donde_esta_el_productor 
