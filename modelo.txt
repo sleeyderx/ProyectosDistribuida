@@ -1,0 +1,9 @@
+# Número de escenarios a simular
+escenarios = 3000
+
+# Variables
+x = normal 0 1
+y = uniform 0 3.14
+
+# Modelo
+x * sin(y)
