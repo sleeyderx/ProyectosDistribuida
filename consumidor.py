@@ -3,17 +3,15 @@ import json
 import math
 import sys
 import time
-import random  # <--- Necesario para IDs únicos
-import numpy as np  # <--- Necesario para estadísticas
+import random
+import numpy as np
 
 
 class Consumidor:
     def __init__(self, host_rabbitmq="localhost", consumidor_id=None):
         self.host_rabbitmq = host_rabbitmq
 
-        # --- CORRECCIÓN 1: ID ÚNICO ---
-        # Agregamos random para que si lanzas varios workers al mismo tiempo,
-        # el visualizador los distinga como workers diferentes.
+
         suffix = random.randint(1000, 9999)
         self.consumidor_id = consumidor_id or f"worker_{int(time.time())}_{suffix}"
 
@@ -23,7 +21,7 @@ class Consumidor:
         self.channel = None
         self.resultados = []
 
-        # Variables para controlar qué estamos escuchando
+
         self.tag_modelo = None
         self.tag_escenarios = None
 
@@ -36,7 +34,7 @@ class Consumidor:
                 pika.ConnectionParameters(host=self.host_rabbitmq, heartbeat=600)
             )
             self.channel = self.connection.channel()
-            self.channel.basic_qos(prefetch_count=50)  # Aumentamos un poco el prefetch para eficiencia
+            self.channel.basic_qos(prefetch_count=50)
 
             # Declarar colas
             self.channel.queue_declare(queue='modelo', durable=True)
@@ -59,8 +57,7 @@ class Consumidor:
                 print(f"Modelo recibido: {modelo_msg['expresion']}")
                 ch.basic_ack(delivery_tag=method.delivery_tag)
 
-                # --- CORRECCIÓN 2: FLUJO DE ESTADOS ---
-                # Dejamos de escuchar 'modelo' para enfocarnos en 'escenarios'
+
                 if self.tag_modelo:
                     self.channel.basic_cancel(self.tag_modelo)
                     self.tag_modelo = None
@@ -92,7 +89,7 @@ class Consumidor:
         try:
             mensaje = json.loads(body.decode('utf-8'))
 
-            # --- CORRECCIÓN 3: REPORTE FINAL ---
+
             if mensaje.get('tipo') == 'fin_escenarios':
                 ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -107,8 +104,7 @@ class Consumidor:
                 else:
                     print("   No se procesaron datos para este modelo.")
 
-                # --- VOLVER AL ESTADO DE ESPERA ---
-                # 1. Dejar de escuchar escenarios
+
                 if self.tag_escenarios:
                     self.channel.basic_cancel(self.tag_escenarios)
                     self.tag_escenarios = None
@@ -121,7 +117,7 @@ class Consumidor:
                 )
                 return
 
-            # Procesamiento normal
+
             if self.modelo_actual and mensaje.get('modelo_id') == self.modelo_id:
                 resultado = self.evaluar_modelo(
                     self.modelo_actual['expresion'],
@@ -145,7 +141,7 @@ class Consumidor:
                         routing_key='resultados',
                         body=json.dumps(resultado_msg),
                         properties=pika.BasicProperties(delivery_mode=1)
-                        # Modo 1 (no persistente) es más rápido para resultados
+
                     )
 
                     if len(self.resultados) % 100 == 0:
@@ -155,8 +151,7 @@ class Consumidor:
 
         except Exception as e:
             print(f"Error procesando: {e}")
-            # Intentar no perder el mensaje si fue un error transitorio,
-            # pero aquí hacemos ack para no bloquear la cola.
+
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def iniciar(self):
