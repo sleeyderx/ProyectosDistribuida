@@ -13,7 +13,6 @@ datos_x = []
 datos_y = []
 progreso_productor = 0
 
-# 1. FORZAR BACKEND INTERACTIVO (Antes de importar pyplot)
 matplotlib.use('TkAgg')
 
 def hilo_consumo_resultados():
@@ -27,7 +26,7 @@ def hilo_consumo_resultados():
         global progreso_productor
 
         if method.routing_key == configuracion.Q_MONITOREO:
-            # Mensaje tipo "PROD:Generado:50/100"
+
             msg = body.decode()
             if "PROD" in msg:
                 progreso_productor += 1
